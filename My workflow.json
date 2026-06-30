@@ -1,0 +1,19 @@
+{
+  "name": "My workflow",
+  "nodes": [],
+  "pinData": {},
+  "connections": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "8f383ced-8e51-4fa8-b563-08941549f390",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cea21799dcd04a21612241726aac9264883919481a088fd27af4f3bce44a81ae"
+  },
+  "nodeGroups": [],
+  "id": "C311g9E1u1HSvauc",
+  "tags": []
+}
