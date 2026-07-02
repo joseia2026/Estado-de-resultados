@@ -1,0 +1,239 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -320,
+        -208
+      ],
+      "id": "a694d0bf-645e-4d9b-b181-23918178ee6f",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst er = data.estadoDeResultados;\nconst cp = data.costoDeProduccion;\n\nfunction formatear(num) {\n  return new Intl.NumberFormat('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num);\n}\n\nconst filasDetalleC = cp.detalleC.map(item => `\n  <tr>\n    <td style=\"padding:6px 10px;border-bottom:1px solid #e0e0e0;\">${item.codigo}</td>\n    <td style=\"padding:6px 10px;border-bottom:1px solid #e0e0e0;\">${item.descripcion}</td>\n    <td style=\"padding:6px 10px;border-bottom:1px solid #e0e0e0;text-align:right;\">$ ${formatear(item.importe)}</td>\n  </tr>\n`).join('');\n\n// ===== Gráfico de torta con QuickChart =====\nconst chartConfig = {\n  type: 'pie',\n  data: {\n    labels: ['Costo de Producción', 'Gastos de Administración', 'Gastos de Comercialización', 'Gastos de Financiación'],\n    datasets: [{\n      data: [cp.total, er.gastosAdministracion, er.gastosComercializacion, er.gastosFinanciacion],\n      backgroundColor: ['#1a5276', '#2980b9', '#5dade2', '#aed6f1']\n    }]\n  },\n  options: {\n    plugins: {\n      legend: { position: 'bottom' },\n      title: { display: true, text: 'Distribución General de Gastos' }\n    }\n  }\n};\nconst chartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}&width=500&height=350`;\n\nconst html = `\n<div style=\"font-family:Arial, sans-serif; max-width:700px; margin:0 auto; color:#2c3e50;\">\n\n  <h1 style=\"text-align:center;color:#1a5276;border-bottom:3px solid #1a5276;padding-bottom:10px;\">\n    Informe Económico Mensual\n  </h1>\n\n  <h2 style=\"color:#1a5276;margin-top:30px;\">Costo de Producción</h2>\n  <table style=\"width:100%;border-collapse:collapse;margin-bottom:10px;\">\n    <tr style=\"background:#eaf2f8;\">\n      <td style=\"padding:8px 10px;font-weight:bold;\">A - Mano de Obra (Directa, Indirecta y Cargas Sociales)</td>\n      <td style=\"padding:8px 10px;text-align:right;font-weight:bold;\">$ ${formatear(cp.itemA_manoDeObra)}</td>\n    </tr>\n    <tr>\n      <td style=\"padding:8px 10px;font-weight:bold;\">B - Gastos de Fabricación</td>\n      <td style=\"padding:8px 10px;text-align:right;font-weight:bold;\">$ ${formatear(cp.itemB_gastosFabricacion)}</td>\n    </tr>\n    <tr style=\"background:#eaf2f8;\">\n      <td style=\"padding:8px 10px;font-weight:bold;\">C - Costo Directo de Fabricación</td>\n      <td style=\"padding:8px 10px;text-align:right;font-weight:bold;\">$ ${formatear(cp.itemC_costoDirectoFabricacion)}</td>\n    </tr>\n  </table>\n\n  <h3 style=\"color:#1a5276;margin-top:20px;font-size:14px;\">Detalle del ítem C</h3>\n  <table style=\"width:100%;border-collapse:collapse;font-size:13px;\">\n    <tr style=\"background:#1a5276;color:white;\">\n      <td style=\"padding:6px 10px;\">Código</td>\n      <td style=\"padding:6px 10px;\">Descripción</td>\n      <td style=\"padding:6px 10px;text-align:right;\">Importe</td>\n    </tr>\n    ${filasDetalleC}\n  </table>\n\n  <table style=\"width:100%;border-collapse:collapse;margin-top:15px;\">\n    <tr style=\"background:#1a5276;color:white;\">\n      <td style=\"padding:10px;font-weight:bold;\">TOTAL COSTO DE PRODUCCIÓN</td>\n      <td style=\"padding:10px;text-align:right;font-weight:bold;\">$ ${formatear(cp.total)}</td>\n    </tr>\n  </table>\n\n  <h2 style=\"color:#1a5276;margin-top:40px;\">Estado de Resultados</h2>\n  <table style=\"width:100%;border-collapse:collapse;font-size:14px;\">\n    <tr>\n      <td style=\"padding:8px 10px;\">Ventas</td>\n      <td style=\"padding:8px 10px;text-align:right;\">$ ${formatear(er.ventas)}</td>\n    </tr>\n    <tr style=\"color:#c0392b;\">\n      <td style=\"padding:8px 10px;\">Menos: Rechazo (1%)</td>\n      <td style=\"padding:8px 10px;text-align:right;\">- $ ${formatear(er.rechazo)}</td>\n    </tr>\n    <tr style=\"background:#eaf2f8;font-weight:bold;\">\n      <td style=\"padding:8px 10px;\">VENTAS NETAS</td>\n      <td style=\"padding:8px 10px;text-align:right;\">$ ${formatear(er.ventasNetas)}</td>\n    </tr>\n    <tr style=\"color:#c0392b;\">\n      <td style=\"padding:8px 10px;\">Menos: Costo de Producción</td>\n      <td style=\"padding:8px 10px;text-align:right;\">- $ ${formatear(er.costoDeProduccion)}</td>\n    </tr>\n    <tr style=\"background:#eaf2f8;font-weight:bold;\">\n      <td style=\"padding:8px 10px;\">RESULTADO BRUTO</td>\n      <td style=\"padding:8px 10px;text-align:right;\">$ ${formatear(er.resultadoBruto)}</td>\n    </tr>\n    <tr style=\"color:#c0392b;\">\n      <td style=\"padding:8px 10px;\">Menos: Gastos de Administración</td>\n      <td style=\"padding:8px 10px;text-align:right;\">- $ ${formatear(er.gastosAdministracion)}</td>\n    </tr>\n    <tr style=\"color:#c0392b;\">\n      <td style=\"padding:8px 10px;\">Menos: Gastos de Comercialización</td>\n      <td style=\"padding:8px 10px;text-align:right;\">- $ ${formatear(er.gastosComercializacion)}</td>\n    </tr>\n    <tr style=\"color:#c0392b;\">\n      <td style=\"padding:8px 10px;\">Menos: Gastos de Financiación</td>\n      <td style=\"padding:8px 10px;text-align:right;\">- $ ${formatear(er.gastosFinanciacion)}</td>\n    </tr>\n    <tr style=\"background:#1a5276;color:white;font-weight:bold;font-size:16px;\">\n      <td style=\"padding:12px 10px;\">RESULTADO NETO</td>\n      <td style=\"padding:12px 10px;text-align:right;\">$ ${formatear(er.resultadoNeto)}</td>\n    </tr>\n  </table>\n\n  <div style=\"margin-top:30px;text-align:center;\">\n    <h2 style=\"color:#1a5276;\">Distribución de Gastos</h2>\n    <img src=\"${chartUrl}\" style=\"max-width:500px;width:100%;\" />\n  </div>\n\n</div>\n`;\n\nreturn [{ json: { ...data, html } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        0
+      ],
+      "id": "26998d08-bb66-470d-bab5-253895ddc2e4",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.renderlyapi.com/v1/pdf/from-html",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer rly_live_KlclxwUgaONpIeCSVCswzI"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ html: $json.html }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -256,
+        32
+      ],
+      "id": "7aafa723-6f29-48f9-bff2-042a348e4ff1",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": ""
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -688,
+        -208
+      ],
+      "id": "e67804ae-285c-4621-8dca-3d05317b55f7",
+      "name": "GmailTrigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "n0C2cX1HJPZPMcIl",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nlet emailCliente = 'SIN_EMAIL';\n\nconst fromField = item.json.from;\n\nif (fromField && typeof fromField === 'object' && fromField.value && fromField.value[0]) {\n  emailCliente = fromField.value[0].address;\n} else if (typeof fromField === 'string') {\n  const match = fromField.match(/<(.+)>/);\n  emailCliente = match ? match[1] : fromField.replace('From: ', '').trim();\n}\n\nitem.json.emailCliente = emailCliente;\nreturn [item];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        -208
+      ],
+      "id": "dfa30198-9210-40a9-8b3e-57fc0ee6ccfe",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== 1. Normalizar los datos de entrada =====\nfunction parseImporte(valor) {\n  if (typeof valor === 'number') return valor;\n  if (!valor) return 0;\n  let str = String(valor).trim();\n  str = str.replace(/[$\\s]/g, '');\n  if (str.includes(',') && str.includes('.')) {\n    str = str.replace(/\\./g, '').replace(',', '.');\n  } else if (str.includes(',')) {\n    str = str.replace(',', '.');\n  }\n  const num = parseFloat(str);\n  return isNaN(num) ? 0 : num;\n}\n\nconst filas = $input.all().map(item => {\n  const j = item.json;\n  const keys = Object.keys(j);\n  const codigoKey = keys.find(k => /cod/i.test(k));\n  const descKey = keys.find(k => /desc|detalle|concepto/i.test(k));\n  const importeKey = keys.find(k => /import|monto|precio|total/i.test(k));\n\n  return {\n    codigo: parseInt(String(j[codigoKey]).trim(), 10),\n    descripcion: j[descKey] ? String(j[descKey]).trim() : '',\n    importe: parseImporte(j[importeKey])\n  };\n}).filter(f => !isNaN(f.codigo));\n\n// ===== 2. Función helper: sumar por rango, con exclusiones opcionales =====\nfunction sumarRango(desde, hasta, excluir = []) {\n  return filas\n    .filter(f => f.codigo >= desde && f.codigo <= hasta && !excluir.includes(f.codigo))\n    .reduce((acc, f) => acc + f.importe, 0);\n}\n\nfunction detalleRango(desde, hasta) {\n  return filas\n    .filter(f => f.codigo >= desde && f.codigo <= hasta)\n    .map(f => ({ codigo: f.codigo, descripcion: f.descripcion, importe: f.importe }));\n}\n\n// ===== 3. Ventas (código 511000) =====\nconst ventas = filas.find(f => f.codigo === 511000)?.importe || 0;\n\n// ===== 4. Costo de Producción (A + B + C) =====\nconst itemA = sumarRango(641009, 641011);\nconst itemB = sumarRango(651001, 659004, [654001, 654002, 654003]);\n\nconst detalleC = [\n  ...detalleRango(641001, 641008),\n  ...detalleRango(654001, 654003)\n];\nconst itemC = detalleC.reduce((acc, f) => acc + f.importe, 0);\n\nconst costoProduccion = itemA + itemB + itemC;\n\n// ===== 5. Gastos operativos (D, E, F) =====\nconst itemD = sumarRango(611001, 618521);\nconst itemE = sumarRango(621001, 624001);\nconst itemF = sumarRango(631001, 634002);\n\n// ===== 6. Estado de Resultados =====\nconst rechazo = ventas * 0.01;\nconst ventasNetas = ventas - rechazo;\nconst resultadoBruto = ventasNetas - costoProduccion;\nconst resultadoNeto = resultadoBruto - itemD - itemE - itemF;\n\n// ===== 7. Salida =====\nreturn [{\n  json: {\n           costoDeProduccion: {\n      itemA_manoDeObra: itemA,\n      itemB_gastosFabricacion: itemB,\n      itemC_costoDirectoFabricacion: itemC,\n      detalleC: detalleC,\n      total: costoProduccion\n    },\n    estadoDeResultados: {\n      ventas: ventas,\n      rechazo: rechazo,\n      ventasNetas: ventasNetas,\n      costoDeProduccion: costoProduccion,\n      resultadoBruto: resultadoBruto,\n      gastosAdministracion: itemD,\n      gastosComercializacion: itemE,\n      gastosFinanciacion: itemF,\n      resultadoNeto: resultadoNeto\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        80
+      ],
+      "id": "1790e73e-5ce9-4c70-90d0-183f6757c04d",
+      "name": "CalculoNode"
+    },
+    {
+      "parameters": {
+        "sendTo": "diplomaturajcia@gmail.com",
+        "subject": "Informe Económico Mensual",
+        "message": "Hola, adjuntamos el informe económico mensual solicitado. Saludos.",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "={{ Object.keys($binary)[0] }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -32,
+        0
+      ],
+      "id": "b86d8282-d72b-43cb-a1f8-3a83392464f9",
+      "name": "Send a message",
+      "webhookId": "f929ca90-29f8-42c4-b9c4-9ebd316d941e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "n0C2cX1HJPZPMcIl",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "CalculoNode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GmailTrigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CalculoNode": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "139fbf03-9f9f-410c-9261-b4963f376839",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fa1acebdce34651bc5c222ac76c620e3b3e42046c1052b5b4e040feb5ebf7ff5"
+  },
+  "nodeGroups": [],
+  "id": "PdRCrtic2sLZOtZS",
+  "tags": []
+}
